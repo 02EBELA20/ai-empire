@@ -37,7 +37,7 @@ function buildLayout(s: GameState): Layout {
   const hasCore = L('ai_core') > 0;
 
   for (let i = 0; i < pcs; i++) placed.push({ id: 'basic_pc', pos: [2.2 + i * 0.9, -1.5], stage: stageOf(L('basic_pc')) });
-  if (hasGen) placed.push({ id: 'power_gen', pos: [0, 5.2], stage: stageOf(L('power_gen')) });
+  if (hasGen) placed.push({ id: 'power_gen', pos: [0, -1.5], stage: stageOf(L('power_gen')) });
   for (let j = 0; j < cools; j++) placed.push({ id: 'cooling', pos: [0, j * 1.2], stage: stageOf(L('cooling')) });
   for (let i = 0; i < gpus; i++) placed.push({ id: 'gpu_rack', pos: [2.2, i * 1.2], stage: stageOf(L('gpu_rack')) });
   if (hasHub) placed.push({ id: 'network_hub', pos: [4.6, 1.5], stage: stageOf(L('network_hub')) });
@@ -46,12 +46,12 @@ function buildLayout(s: GameState): Layout {
   const dataTarget: V2 | null = hasHub ? [5.05, 1.95] : hasCore ? [6.85, 2.45] : null;
   for (let i = 0; i < gpus; i++) {
     const y = i * 1.2 + 0.45;
-    if (hasGen) cables.push({ kind: 'power', path: [[0.45, 5.65], [1.9, 5.65], [1.9, y], [2.7, y]] });
+    if (hasGen) cables.push({ kind: 'power', path: [[0.45, -1.05], [1.9, -1.05], [1.9, y], [2.7, y]] });
     if (dataTarget) cables.push({ kind: 'data', path: [[3.2, y], [3.9, y], [3.9, dataTarget[1]], dataTarget] });
   }
   const pcX = (i: number) => 2.2 + i * 0.9 + 0.35;
   if (hasGen) {
-    for (let i = 0; i < pcs; i++) cables.push({ kind: 'power', path: [[0.45, 5.65], [1.9, 5.65], [1.9, -1.2], [pcX(i), -1.2]] });
+    for (let i = 0; i < pcs; i++) cables.push({ kind: 'power', path: [[0.45, -1.05], [1.9, -1.05], [1.9, -1.2], [pcX(i), -1.2]] });
   }
   for (let j = 0; j < cools; j++) {
     const cy = j * 1.2 + 0.45;
@@ -251,7 +251,7 @@ export class GameScene {
     this.curCenter.copy(this.tgtCenter);
     this.camera.zoom = this.tgtZoom;
     this.camera.updateProjectionMatrix();
-    window.addEventListener('resize', () => this.resize());
+    new ResizeObserver(() => this.resize()).observe(canvas);
   }
 
   resize(): void {
@@ -272,22 +272,28 @@ export class GameScene {
   private fit(): void {
     const { x0, x1, z0, z1 } = this.bounds;
     const c = new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
-    const inv = this.camera.quaternion.clone().invert();
-    let ex = 0;
-    let ey = 0;
-    for (const x of [x0, x1]) for (const z of [z0, z1]) for (const y of [-0.3, 2.2]) {
+    const q = this.camera.quaternion;
+    const inv = q.clone().invert();
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const x of [x0, x1]) for (const z of [z0, z1]) for (const y of [-0.3, 1.9]) {
       const p = new THREE.Vector3(x, y, z).sub(c).applyQuaternion(inv);
-      ex = Math.max(ex, Math.abs(p.x));
-      ey = Math.max(ey, Math.abs(p.y));
+      minX = Math.min(minX, p.x);
+      maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y);
+      maxY = Math.max(maxY, p.y);
     }
+    const hx = (maxX - minX) / 2;
+    const hy = (maxY - minY) / 2;
     const aspect = this.camera.right / 5;
-    this.tgtZoom = Math.min((5 * aspect) / (ex * 1.1), 5 / (ey * 1.1));
-    this.tgtCenter.copy(c);
+    this.tgtZoom = Math.min((5 * aspect) / (hx * 1.06), 5 / (hy * 1.06));
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    this.tgtCenter.copy(c).addScaledVector(right, (minX + maxX) / 2).addScaledVector(up, (minY + maxY) / 2);
   }
 
   private rebuildGround(layout: Layout): void {
     const FP: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
-    let x0 = 1.4, x1 = 5.6, z0 = -0.6, z1 = 3.4;
+    let x0 = 1.0, x1 = 5.0, z0 = -1.0, z1 = 2.6;
     for (const p of layout.placed) {
       const f = FP[p.id] ?? [1, 1];
       x0 = Math.min(x0, p.pos[0]);

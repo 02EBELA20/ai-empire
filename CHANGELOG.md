@@ -10,6 +10,7 @@
 - Camera now auto-frames the built area; the floor grows with the base.
 - Brighter device bodies with neon outlines; extra rim light.
 - Power and cooling cables now reach Basic PCs, so connections are visible from the first machines.
+- Generator moved next to the PC row (compact base); camera fit is now asymmetric in view space and tracks canvas resizes.
 ### Known gaps
 - Not yet tested on a real phone; no screenshot test was possible in the build sandbox.
 
