@@ -1,7 +1,7 @@
 # HANDOFF
 
 - **Project version:** 0.1.0-m1 (Milestone 1: Game Design and Technical Planning)
-- **Latest stable commit:** none yet on `main` (see "Commit status" below)
+- **Latest stable commit:** `55b57d3` (M1 docs, economy data, simulator)
 - **Current working branch:** `claude/m1-planning`
 - **Repository:** https://github.com/02EBELA20/ai-empire
 
@@ -32,4 +32,4 @@ Owner approval of M1 → start M2 on branch `claude/m2-prototype`.
 Nothing from ChatGPT exists yet. If `gpt/*` branches appear, merge by pull request; do not force-push `main`.
 
 ## Commit status
-See `git log` on `claude/m1-planning`. The first commit hash is added to this file in a follow-up commit.
+Content commit `55b57d3` on `claude/m1-planning`; this file was updated with that hash in a follow-up commit. `main` is fast-forwarded to the same content.
