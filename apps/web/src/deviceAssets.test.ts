@@ -61,10 +61,14 @@ function makeGlb(w: number, h: number, d: number, opts: { lift?: number } = {}):
 }
 
 const opts = { meshopt: false };
+/** Owner-approved gpu_rack stage 1 size in meters: width X, depth Z, height Y. */
+const W = 3.2;
+const D = 2.8;
+const H = 2.5;
 
 describe('parseDeviceGlb', () => {
   it('accepts a model that follows the contract', async () => {
-    const { asset, report } = await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(3.8, 1.6, 3.8), opts);
+    const { asset, report } = await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(W, H, D), opts);
     expect(report.issues.filter((i) => i.severity === 'error')).toEqual([]);
     expect(asset).not.toBeNull();
     expect(asset!.key).toBe('gpu_rack_s1');
@@ -73,14 +77,14 @@ describe('parseDeviceGlb', () => {
   });
 
   it('rejects a bad file name', async () => {
-    const { asset, report } = await parseDeviceGlb(cfg, 'rack.glb', makeGlb(3.8, 1.6, 3.8), opts);
+    const { asset, report } = await parseDeviceGlb(cfg, 'rack.glb', makeGlb(W, H, D), opts);
     expect(asset).toBeNull();
     expect(report.issues[0]!.message).toMatch(/file name/);
   });
 
   it('rejects a model exported in centimeters, and a floating one', async () => {
-    expect((await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(380, 160, 380), opts)).asset).toBeNull();
-    expect((await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(3.8, 1.6, 3.8, { lift: 1 }), opts)).asset).toBeNull();
+    expect((await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(320, 250, 280), opts)).asset).toBeNull();
+    expect((await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(W, H, D, { lift: 1 }), opts)).asset).toBeNull();
   });
 
   it('reports unreadable data instead of throwing', async () => {
@@ -92,7 +96,7 @@ describe('parseDeviceGlb', () => {
 
 describe('DeviceAssets.instantiate', () => {
   async function loaded() {
-    const { asset } = await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(3.8, 1.6, 3.8), opts);
+    const { asset } = await parseDeviceGlb(cfg, 'gpu_rack_s1.glb', makeGlb(W, H, D), opts);
     const a = new DeviceAssets(cfg);
     a.add(asset!);
     return a;
@@ -113,8 +117,12 @@ describe('DeviceAssets.instantiate', () => {
     expect(inst.holder.position.z).toBeCloseTo(0.45, 9);
     const box = new THREE.Box3().setFromObject(inst.holder);
     expect(box.min.y).toBeCloseTo(0, 6);
-    expect(box.max.y).toBeCloseTo(1.6 * cfg.worldPerMeter, 6);
-    expect(box.max.x - box.min.x).toBeCloseTo(3.8 * cfg.worldPerMeter, 6);
+    expect(box.max.y).toBeCloseTo(H * cfg.worldPerMeter, 6);
+    expect(box.max.x - box.min.x).toBeCloseTo(W * cfg.worldPerMeter, 6);
+    expect(box.max.z - box.min.z).toBeCloseTo(D * cfg.worldPerMeter, 6);
+    // the scaled model fits inside the legacy gpu_rack footprint of 1.0 x 0.9 world units
+    expect(box.max.x - box.min.x).toBeLessThanOrEqual(1.0);
+    expect(box.max.z - box.min.z).toBeLessThanOrEqual(0.9);
   });
 
   it('exposes fans, sockets and per-instance emissive materials', async () => {
@@ -123,8 +131,8 @@ describe('DeviceAssets.instantiate', () => {
     const two = a.instantiate('gpu_rack', 1, [1, 0.9])!;
     expect(one.fans.map((f) => f.name)).toEqual(['fan_a']);
     expect(Object.keys(one.sockets).sort()).toEqual(['socket_cooling', 'socket_data', 'socket_power']);
-    // socket_power sits at x = -1.9 m relative to the pivot, i.e. 0.5 - 1.9 * 0.25 in the group
-    expect(one.sockets['socket_power']!.x).toBeCloseTo(0.5 - 1.9 * cfg.worldPerMeter, 6);
+    // socket_power sits at x = -W/2 relative to the pivot, i.e. 0.5 - (W/2) * 0.25 in the group
+    expect(one.sockets['socket_power']!.x).toBeCloseTo(0.5 - (W / 2) * cfg.worldPerMeter, 6);
     expect(one.emissives).toHaveLength(1);
     expect(one.emissives[0]!.mat).not.toBe(two.emissives[0]!.mat);
   });

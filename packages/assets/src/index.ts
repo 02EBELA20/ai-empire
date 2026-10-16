@@ -12,6 +12,9 @@ export interface DeviceAssetSpec {
   triangles: number[];
   /** Named connection empties the model should provide. */
   sockets: string[];
+  /** Optional recommended visible size per stage (key = stage number): [width X, depth Z, height Y] in meters. Informational; the hard limits are the footprint and the height tolerance. */
+  recommended?: Record<string, [number, number, number]>;
+  note?: string;
 }
 
 export interface AssetConfig {

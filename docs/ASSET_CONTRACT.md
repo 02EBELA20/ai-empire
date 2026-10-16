@@ -24,13 +24,28 @@ One tile is 2 m x 2 m. The model must fit the footprint minus a 0.08 m inset on 
 | basic_pc | 1 x 1 | 2 x 2 | 1.84 x 1.84 | 1.25 / 1.4 / 1.55 / 1.7 | 650 / 1050 / 1600 / 2250 |
 | power_gen | 2 x 2 | 4 x 4 | 3.84 x 3.84 | 1.5 / 1.8 / 2.2 / 2.4 | 900 / 1450 / 2300 / 3200 |
 | cooling | 2 x 2 | 4 x 4 | 3.84 x 3.84 | 1.5 / 1.9 / 2.1 / 2.5 | 850 / 1400 / 2250 / 3100 |
-| gpu_rack | 2 x 2 | 4 x 4 | 3.84 x 3.84 | 1.6 / 1.9 / 2.2 / 2.6 | 1000 / 1750 / 2650 / 3700 |
+| gpu_rack | 2 x 2 | 4 x 4 | 3.84 x 3.84 | **2.5** / 2.7* / 2.9* / 3.2* | 1000 / 1750 / 2650 / 3700 |
 | network_hub | 1 x 2 | 2 x 4 | 1.84 x 3.84 | 1.2 / 1.4 / 1.7 / 2.0 | 600 / 1050 / 1700 / 2400 |
 | ai_core | 3 x 3 | 6 x 6 | 5.84 x 5.84 | 2.1 / 2.5 / 3.0 / 3.4 | 1400 / 2400 / 3700 / 5000 |
 
-**`gpu_rack_s1.glb` specifically:** footprint 4 x 4 m, model at most **3.84 x 3.84 m**, height about **1.6 m**, up to **1000 triangles**, 1 to 2 materials, two fans, sockets `socket_power`, `socket_data`, `socket_cooling`.
+\* Stage 2-4 heights of the gpu_rack are provisional: they only had to stay at or above stage 1 and will be confirmed when those models are designed. Other devices still use the values from `docs/art/DEVICES.md`.
 
-Open question (D-018): a 4 x 4 m rack that is only 1.6 m tall is very flat. ChatGPT must confirm this is intended before modeling; if the footprint or height changes, update `device-assets.json` and this table.
+**`gpu_rack_s1.glb` specifically (owner-approved 2026-10-16, D-018):**
+
+| Item | Value |
+|---|---|
+| Grid footprint | 2 x 2 cells (unchanged) |
+| Hard limit on the model | 3.84 x 3.84 m (X x Z) |
+| **Recommended visible size** | **3.2 m wide (X) x 2.8 m deep (Z) x 2.5 m tall (Y)** |
+| Origin | bottom center, on the ground |
+| Forward | glTF +Z (Blender -Y) |
+| Triangle target | 1000 (see the policy below) |
+| Materials | 1 to 2 |
+| Required nodes | `fan_*` (two fans), `socket_power`, `socket_data`, `socket_cooling` |
+
+The recommended size is a target, not a gate: the game accepts any model inside the 3.84 x 3.84 m limit whose height is within 25% of 2.5 m (1.88 to 3.13 m) without a message, and only warns beyond that.
+
+**Triangle budget policy.** 1000 triangles is the starting target for `gpu_rack_s1`, not a reason to cut silhouette quality or readability. The game does not reject a model until it has more than double the budget (a warning appears above 1250). If the first real Blender model shows that a modest increase is needed, report the proposed new budget first and change `device-assets.json` and this document together. The whole scene must stay under 100 draw calls and 150,000 visible triangles; the current placed-device total at stage 4 is about 47,000.
 
 ## 4. Named nodes and materials
 - Meshes: `body`, `trim`, `emissive` (more are fine). Keep to **1-2 materials** (3 only in exceptional cases) to protect the 100 draw-call budget.

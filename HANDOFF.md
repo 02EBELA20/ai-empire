@@ -8,7 +8,8 @@
 ## M4 prep status (branch claude/m3-network)
 - The game can accept `gpu_rack_s1.glb` (and any `<device_id>_s<1-4>.glb`) dropped in `apps/web/assets/models/devices/`; contract in `docs/ASSET_CONTRACT.md`, decisions D-013..D-018. 65 tests pass; tsc and both builds clean.
 - NOT verified: loading a real Blender model in a browser (no model exists; the loader is tested only on an in-memory GLB), draw calls and FPS on a phone.
-- Waiting on: ChatGPT to confirm the gpu_rack proportions (4 x 4 m footprint but only 1.6 m high); owner to confirm the D-004 tone change and the prestige-linked campus; then ChatGPT/Blender produce `gpu_rack_s1.glb` and one floor tile.
+- Owner decisions 2026-10-16: Visual Direction V2 approved (D-004 amended, D-017 accepted); prestige-persistent 24x24 campus DEFERRED (D-014, not implemented); gpu_rack stage 1 is now 3.2 x 2.8 x 2.5 m (D-018, `device-assets.json`, `docs/ASSET_CONTRACT.md`); triangle target stays 1000, report before raising it.
+- Waiting on: ChatGPT/Blender to produce `gpu_rack_s1.glb` and one floor tile. ChatGPT should also update `docs/art/DEVICES.md` on `gpt/art-direction`: its gpu_rack stage 1 size (1.6 m high) is out of date, and stage 2-4 heights here are provisional.
 
 ## M3-B status (branch claude/m3-network)
 - Optimize button and device inspector added (see CHANGELOG 0.3.1-m3b). 42 tests pass. Camera now frames the device cluster. Tap-to-inspect (raycast) and the visual layout are not verified in a browser; owner screenshots are the check.
@@ -42,7 +43,7 @@
 5. M4 art package received and pushed on `gpt/art-direction` (docs/art/, commits 09b8d9f, aeab0be). Technical review done; decisions D-013..D-016 recorded here. Owner to approve the final visual direction; then supersede D-003/D-004 and start with silhouette sheets, then `gpu_rack_s1` + one floor tile as the pipeline probe.
 
 ## Next recommended action
-Owner feedback on the playable preview, then phone FPS test. (Style D-003/D-004 are final.)
+Owner feedback on the playable preview, then phone FPS test. (Style: D-003 final, D-004 amended to Visual Direction V2.)
 
 ## Do not overwrite
 Nothing from ChatGPT exists yet. If `gpt/*` branches appear, merge by pull request; do not force-push `main`.

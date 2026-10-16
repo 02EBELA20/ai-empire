@@ -17,11 +17,11 @@ import {
 const cfg = assetsJson as unknown as AssetConfig;
 const economy = economyJson as unknown as EconomyConfig;
 
-/** A model that satisfies the gpu_rack stage 1 contract exactly. */
+/** A model with the owner-approved gpu_rack stage 1 size: 3.2 m wide (X), 2.8 m deep (Z), 2.5 m tall. */
 function goodRack(over: Partial<AssetStats> = {}): AssetStats {
   return {
-    min: [-1.9, 0, -1.9],
-    max: [1.9, 1.6, 1.9],
+    min: [-1.6, 0, -1.4],
+    max: [1.6, 2.5, 1.4],
     triangles: 980,
     meshes: 1,
     materials: 1,
@@ -71,6 +71,17 @@ describe('stages and names', () => {
     expect(parseAssetFileName('gpu_rack_stage1.glb')).toBeNull();
     expect(parseAssetFileName('gpu_rack_s5.glb')).toBeNull();
   });
+  it('keeps the recommended sizes inside the footprint limit and equal to the stage height', () => {
+    for (const [id, spec] of Object.entries(cfg.devices)) {
+      for (const [stage, [w, d, h]] of Object.entries(spec.recommended ?? {})) {
+        const max = maxModelSize(cfg, id)!;
+        expect(w, `${id} s${stage} width`).toBeLessThanOrEqual(max[0]);
+        expect(d, `${id} s${stage} depth`).toBeLessThanOrEqual(max[1]);
+        expect(h, `${id} s${stage} height`).toBe(spec.heights[Number(stage) - 1]);
+      }
+    }
+    expect(cfg.devices['gpu_rack']!.recommended!['1']).toEqual([3.2, 2.8, 2.5]);
+  });
   it('gives the gpu_rack a 4 x 4 m footprint and a 3.84 m model limit', () => {
     expect(footprintMeters(cfg, 'gpu_rack')).toEqual([4, 4]);
     const m = maxModelSize(cfg, 'gpu_rack')!;
@@ -84,17 +95,29 @@ describe('checkAsset', () => {
   it('accepts a model that follows the contract with no issues', () => {
     expect(checkAsset(cfg, 'gpu_rack', 1, goodRack())).toEqual([]);
   });
+  it('accepts the owner-approved gpu_rack stage 1 size: 3.2 x 2.8 x 2.5 m', () => {
+    expect(checkAsset(cfg, 'gpu_rack', 1, goodRack({ min: [-1.6, 0, -1.4], max: [1.6, 2.5, 1.4] }))).toEqual([]);
+  });
+  it('accepts the full allowed footprint (3.84 x 3.84 m) at the stage 1 height', () => {
+    expect(checkAsset(cfg, 'gpu_rack', 1, goodRack({ min: [-1.92, 0, -1.92], max: [1.92, 2.5, 1.92] }))).toEqual([]);
+  });
+  it('accepts heights within 25% of the spec silently and only warns beyond that', () => {
+    expect(checkAsset(cfg, 'gpu_rack', 1, goodRack({ max: [1.6, 2.0, 1.4] }))).toEqual([]);
+    expect(checkAsset(cfg, 'gpu_rack', 1, goodRack({ max: [1.6, 3.1, 1.4] }))).toEqual([]);
+    const tall = checkAsset(cfg, 'gpu_rack', 1, goodRack({ max: [1.6, 3.3, 1.4] }));
+    expect(tall.map((i) => i.severity)).toEqual(['warn']);
+  });
   it('rejects a model exported in centimeters', () => {
-    expect(errors(goodRack({ min: [-190, 0, -190], max: [190, 160, 190] })).length).toBeGreaterThan(0);
+    expect(errors(goodRack({ min: [-160, 0, -140], max: [160, 250, 140] })).length).toBeGreaterThan(0);
   });
   it('rejects a model that is floating or buried (origin not on the floor)', () => {
-    expect(errors(goodRack({ min: [-1.9, 0.8, -1.9], max: [1.9, 2.4, 1.9] }))[0]!.message).toMatch(/floor/);
+    expect(errors(goodRack({ min: [-1.6, 0.8, -1.4], max: [1.6, 3.3, 1.4] }))[0]!.message).toMatch(/floor/);
   });
   it('rejects a model that is off-center (pivot not at the footprint center)', () => {
-    expect(errors(goodRack({ min: [0, 0, -1.9], max: [3.8, 1.6, 1.9] }))[0]!.message).toMatch(/pivot|centered/);
+    expect(errors(goodRack({ min: [0, 0, -1.4], max: [3.2, 2.5, 1.4] }))[0]!.message).toMatch(/pivot|centered/);
   });
   it('rejects a model larger than its footprint', () => {
-    expect(errors(goodRack({ min: [-2.4, 0, -2.4], max: [2.4, 1.6, 2.4] }))[0]!.message).toMatch(/footprint/);
+    expect(errors(goodRack({ min: [-2.4, 0, -2.4], max: [2.4, 2.5, 2.4] }))[0]!.message).toMatch(/footprint/);
   });
   it('warns, but accepts, a model slightly over the triangle budget or with extra materials', () => {
     const issues = checkAsset(cfg, 'gpu_rack', 1, goodRack({ triangles: 1400, materials: 4 }));
@@ -105,7 +128,7 @@ describe('checkAsset', () => {
     expect(errors(goodRack({ triangles: 2500 })).length).toBe(1);
   });
   it('warns about a missing socket and wrong height', () => {
-    const issues = checkAsset(cfg, 'gpu_rack', 1, goodRack({ max: [1.9, 2.4, 1.9], nodes: ['body', 'socket_power', 'socket_data'] }));
+    const issues = checkAsset(cfg, 'gpu_rack', 1, goodRack({ max: [1.6, 3.4, 1.4], nodes: ['body', 'socket_power', 'socket_data'] }));
     expect(issues.map((i) => i.message).join('|')).toMatch(/socket_cooling/);
     expect(issues.map((i) => i.message).join('|')).toMatch(/height/);
     expect(issues.every((i) => i.severity === 'warn')).toBe(true);

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.3.3-m4prep — 2026-10-16 (branch claude/m3-network)
+### Changed (owner decisions)
+- Visual Direction V2 adopted: D-004 amended to Premium Industrial Sci-Fi with controlled neon accents; D-017 accepted; root ART_DIRECTION.md updated to match.
+- Prestige-persistent 24x24 campus deferred (D-014); nothing implemented.
+- gpu_rack stage 1: recommended 3.2 x 2.8 x 2.5 m inside the unchanged 2x2-cell footprint and 3.84 m limit; provisional stage 2-4 heights 2.7 / 2.9 / 3.2 m. Triangle target stays 1000, with a report-before-raising policy.
+### Added
+- Optional `recommended` size and `note` per device in `device-assets.json`; tests that the loader accepts the new size and tolerance (+4 tests).
+
 ## 0.3.2-m4prep — 2026-10-16 (branch claude/m3-network)
 ### Added
 - Device asset contract (D-018, `docs/ASSET_CONTRACT.md`): file names, folder `apps/web/assets/models/devices/`, meters, Y-up, pivot at the footprint center, sizes, triangle budgets, socket and fan naming. Data in `packages/data/device-assets.json`.
@@ -11,7 +19,7 @@
 - Spinning parts now rotate around their own local axis.
 - Single-file preview grows by about 120 KB (GLTFLoader).
 ### Not changed
-- No model exists yet, no economy change, D-003/D-004 and root ART_DIRECTION.md untouched.
+- No model exists yet, no economy change.
 
 
 ## 0.3.1-m3b — 2026-10-16 (branch claude/m3-network)
