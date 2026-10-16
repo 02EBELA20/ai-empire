@@ -1,5 +1,5 @@
-import { bottleneck, computeNetwork, getDevice, nextMilestone, prestigeMultiplier, type EconomyConfig, type NetworkResult } from '@economy';
-import { canAfford, planPurchase, prestigeGain, tapValue, type GameState } from '@sim';
+import { bottleneck, computeNetwork, cost, getDevice, milestoneMult, nextMilestone, prestigeMultiplier, type EconomyConfig, type NetworkResult } from '@economy';
+import { canAfford, planOptimize, planPurchase, prestigeGain, tapValue, type GameState } from '@sim';
 import { formatDuration, formatNum } from './format';
 
 const META: Record<string, { name: string; color: string; blurb: string }> = {
@@ -14,6 +14,8 @@ const nameOf = (id: string) => META[id]?.name ?? id;
 
 export interface UIHandlers {
   onBuy(id: string): void;
+  onOptimize(): void;
+  onInspect(id: string): void;
   onTap(): void;
   onReboot(): void;
   onReset(): void;
@@ -21,6 +23,7 @@ export interface UIHandlers {
 
 export interface UI {
   update(state: GameState, net: NetworkResult): void;
+  inspect(id: string | null, state: GameState, net: NetworkResult): void;
   showOffline(seconds: number, credits: number): void;
   floatText(text: string): void;
   confirm(message: string, okLabel: string): Promise<boolean>;
@@ -44,20 +47,37 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
     <div class="credits"><span id="cr">0</span><small>Credits</small></div>
     <div class="row"><span id="inc">+0/s</span><span class="pill good" id="eff">100%</span><span id="np"></span></div>
     <div class="hint" id="hint"></div>`;
+  const stage = document.querySelector('.stage') as HTMLElement;
+  const insp = document.createElement('div');
+  insp.className = 'inspector';
+  insp.hidden = true;
+  stage.appendChild(insp);
+  let inspectId: string | null = null;
+  let inspLast = '';
   dock.innerHTML = `
-    <div class="toolbar"><button class="tap" id="tap">TAP</button><button class="reboot" id="reboot"></button></div>
+    <div class="toolbar"><button class="tap" id="tap">TAP</button><button class="opt" id="opt"></button><button class="reboot" id="reboot"></button></div>
     <div class="list" id="list"></div>
     <div class="foot"><span>AI Empire v0.3 prototype</span><button id="reset">Reset save</button></div>`;
 
   const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const cr = el('cr'), inc = el('inc'), eff = el('eff'), np = el('np'), hint = el('hint');
-  const tapBtn = el<HTMLButtonElement>('tap'), rebootBtn = el<HTMLButtonElement>('reboot'), list = el('list');
+  const optBtn = el<HTMLButtonElement>('opt'), tapBtn = el<HTMLButtonElement>('tap'), rebootBtn = el<HTMLButtonElement>('reboot'), list = el('list');
 
   tapBtn.addEventListener('click', () => {
     navigator.vibrate?.(6);
     h.onTap();
   });
   rebootBtn.addEventListener('click', () => h.onReboot());
+  optBtn.addEventListener('click', () => {
+    navigator.vibrate?.(10);
+    h.onOptimize();
+  });
+  insp.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('[data-close]')) {
+      inspectId = null;
+      insp.hidden = true;
+    }
+  });
   el('reset').addEventListener('click', () => h.onReset());
 
   const rows = new Map<string, RowRefs>();
@@ -70,6 +90,7 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
       <div><div class="name">${meta.name}<span class="lvl">Lv 0</span></div><div class="sub"></div><div class="ms"><i></i><span></span></div></div>
       <button class="buy"></button>`;
     list.appendChild(root);
+    (root.querySelector('.name') as HTMLElement).addEventListener('click', () => h.onInspect(d.id));
     const btn = root.querySelector('.buy') as HTMLButtonElement;
     btn.addEventListener('click', () => {
       navigator.vibrate?.(10);
@@ -98,7 +119,43 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
     return s;
   }
 
+  function renderInspector(state: GameState, net: NetworkResult): void {
+    const id = inspectId!;
+    const d = getDevice(cfg, id);
+    const meta = META[id] ?? { name: id, color: '#888', blurb: '' };
+    const n = state.levels[id] ?? 0;
+    const pm = prestigeMultiplier(cfg, state.neuralPoints);
+    const rows: [string, string][] = [['Level', String(n)], ['Next level costs', formatNum(cost(d, n))]];
+    let note = meta.blurb;
+    if (d.kind === 'producer') {
+      const mult = milestoneMult(cfg, n);
+      const own = (d.baseIncome ?? 0) * n * mult * net.eff * net.link * pm;
+      const share = net.income > 0 ? (own / net.income) * 100 : 0;
+      rows.push(['Output', `${formatNum(own)}/s`], ['Share of income', `${share.toFixed(0)}%`], ['Milestone bonus', `x${mult}`]);
+      rows.push(['Draws', `${formatNum((d.power ?? 0) * n)} power, ${formatNum((d.heat ?? 0) * n)} heat`]);
+      if (net.eff < 0.999) note = `Running at ${Math.round(net.eff * 100)}% because of ${bottleneck(net)}. Output without the bottleneck: ${formatNum(own / net.eff)}/s.`;
+    } else if (d.kind === 'power') {
+      rows.push(['Supply', `${formatNum((d.supply ?? 0) * n)} (+${cfg.starterSupply.power} built in)`], ['Network power', `${formatNum(net.powerSupply)} / ${formatNum(net.powerDemand)} used`]);
+    } else if (d.kind === 'cooling') {
+      rows.push(['Supply', `${formatNum((d.supply ?? 0) * n)} (+${cfg.starterSupply.cooling} built in)`], ['Network cooling', `${formatNum(net.coolingSupply)} / ${formatNum(net.heatDemand)} heat`]);
+    } else {
+      rows.push(['Income bonus', `+${Math.round((net.link - 1) * 100)}% (max +${Math.round(cfg.hub.maxBonus * 100)}%)`]);
+    }
+    const html = `<div class="ih"><i style="background:${meta.color}"></i><b>${meta.name}</b><button data-close aria-label="Close">×</button></div>
+      <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl><p>${note}</p>`;
+    if (html !== inspLast) {
+      insp.innerHTML = html;
+      inspLast = html;
+    }
+  }
+
   return {
+    inspect(id, state, net) {
+      inspectId = id;
+      inspLast = '';
+      insp.hidden = id === null;
+      if (id) renderInspector(state, net);
+    },
     update(state, net) {
       cr.textContent = formatNum(state.credits);
       inc.textContent = `+${formatNum(net.income)}/s`;
@@ -109,6 +166,14 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
       const b = bottleneck(net);
       hint.textContent = b === 'cooling' ? 'Bottleneck: cooling. Buy a Cooling Unit to unlock full output.' : b === 'power' ? 'Bottleneck: power. Buy a Power Generator.' : '';
       tapBtn.firstChild!.textContent = `TAP  +${formatNum(tapValue(cfg, state))}`;
+      const op = planOptimize(cfg, state);
+      const showOpt = op.items.length > 0 && op.unlocked;
+      optBtn.classList.toggle('on', showOpt);
+      if (showOpt) {
+        optBtn.innerHTML = `Optimize<small>${formatNum(op.total)}</small>`;
+        optBtn.classList.toggle('poor', !canAfford(state, op));
+      }
+      if (inspectId) renderInspector(state, net);
       const gain = prestigeGain(cfg, state);
       rebootBtn.classList.toggle('on', gain >= 1);
       if (gain >= 1) rebootBtn.textContent = `Singularity Reboot +${gain} NP`;

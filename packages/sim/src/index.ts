@@ -102,6 +102,41 @@ export function planPurchase(cfg: EconomyConfig, s: GameState, id: string): Purc
   return { items, total, unlocked, infraAdded };
 }
 
+/** Cheapest power/cooling purchases that bring efficiency back to 100% (the Optimize button). Empty when already optimal. */
+export function planOptimize(cfg: EconomyConfig, s: GameState): PurchasePlan {
+  const levels: Levels = { ...s.levels };
+  const items: string[] = [];
+  let total = 0;
+  let unlocked = true;
+  for (let i = 0; i < 200; i++) {
+    const net = computeNetwork(cfg, levels);
+    if (net.eff >= 0.999) break;
+    const infraId = bottleneck(net) === 'power' ? 'power_gen' : 'cooling';
+    if (!isUnlocked(cfg, s, infraId)) {
+      unlocked = false;
+      break;
+    }
+    const lv = levels[infraId] ?? 0;
+    total += cost(getDevice(cfg, infraId), lv);
+    levels[infraId] = lv + 1;
+    items.push(infraId);
+  }
+  return { items, total, unlocked, infraAdded: items };
+}
+
+/** Buys the whole Optimize plan or nothing. Returns the plan that was bought, or null. */
+export function optimize(cfg: EconomyConfig, s: GameState): PurchasePlan | null {
+  const plan = planOptimize(cfg, s);
+  if (plan.items.length === 0 || !canAfford(s, plan)) return null;
+  for (const did of plan.items) {
+    const lv = s.levels[did] ?? 0;
+    s.credits -= cost(getDevice(cfg, did), lv);
+    s.levels[did] = lv + 1;
+  }
+  if (s.credits < 0) s.credits = 0;
+  return plan;
+}
+
 export function canAfford(s: GameState, plan: PurchasePlan): boolean {
   return plan.unlocked && s.credits >= plan.total;
 }

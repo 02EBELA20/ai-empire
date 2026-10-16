@@ -1,7 +1,7 @@
 import './style.css';
 import economyJson from '@data/economy.json';
 import type { EconomyConfig } from '@economy';
-import { applyOffline, buy, createState, network, planPurchase, reboot, tap, tick, type GameState } from '@sim';
+import { applyOffline, buy, createState, network, optimize, planPurchase, reboot, tap, tick, type GameState } from '@sim';
 import { loadGame, saveGame, type StorageLike } from '@save';
 import { GameScene } from './scene';
 import { createUI } from './ui';
@@ -46,6 +46,16 @@ const ui = createUI(cfg, {
       for (const pid of new Set(plan.items)) scene.flash(pid);
     }
   },
+  onOptimize() {
+    const plan = optimize(cfg, state);
+    if (!plan) return;
+    refresh();
+    for (const pid of new Set(plan.items)) scene.flash(pid);
+  },
+  onInspect(id) {
+    scene.highlight(id);
+    ui.inspect(id, state, network(cfg, state));
+  },
   onTap() {
     const v = tap(cfg, state);
     ui.floatText(`+${formatNum(v)}`);
@@ -80,6 +90,17 @@ function saveNow() {
   state.lastSeenMs = now();
   saveGame(storage, SAVE_KEY, state, now());
 }
+
+const canvasEl = document.getElementById('view') as HTMLCanvasElement;
+canvasEl.addEventListener('click', (e) => {
+  const id = scene.pick(e.clientX, e.clientY);
+  if (id) {
+    scene.highlight(id);
+    ui.inspect(id, state, network(cfg, state));
+  } else {
+    ui.inspect(null, state, network(cfg, state));
+  }
+});
 
 refresh();
 if (offline.seconds >= 30 && offline.credits > 0) ui.showOffline(offline.seconds, offline.credits);

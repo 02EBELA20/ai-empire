@@ -321,6 +321,26 @@ export class GameScene {
     this.fit();
   }
 
+  /** Which device type is under this screen point, or null. Used for tap-to-inspect. */
+  pick(clientX: number, clientY: number): string | null {
+    const r = this.canvas.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return null;
+    const ndc = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, this.camera);
+    let best: { id: string; d: number } | null = null;
+    for (const { id, v } of this.visuals) {
+      const hit = ray.intersectObject(v.group, true)[0];
+      if (hit && (!best || hit.distance < best.d)) best = { id, d: hit.distance };
+    }
+    return best ? best.id : null;
+  }
+
+  /** Small scale bump on a device type, without the purchase ripple. */
+  highlight(id: string): void {
+    this.flashes.set(id, 1);
+  }
+
   /** Purchase feedback: bump the device type, send a ripple from it and speed up the cable flow for a moment. */
   flash(id: string): void {
     this.flashes.set(id, 1);

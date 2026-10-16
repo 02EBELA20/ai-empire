@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.3.1-m3b — 2026-10-16 (branch claude/m3-network)
+### Added
+- Optimize button (appears only while throttled): buys the cheapest power/cooling needed to restore 100% efficiency, all-or-nothing, shows its cost. `planOptimize` / `optimize` in the sim package (+4 tests, 42 total).
+- Device inspector: tap a device in the scene or a shop row name to see level, output, share of income, milestone bonus, power/heat draw, network supply, next-level cost and a bottleneck note.
+### Changed
+- Camera frames the built devices (closed-loop, measures projected size) instead of the ground slab; the slab may bleed past the screen edges.
+- Footer shows v0.3.
+### Not changed
+- Balance and network model are untouched; the per-cluster model remains pending because it changes balance.
+
 ## 0.3.0-m3a — 2026-10-15 (branch claude/m3-network)
 ### Added
 - Purchase feedback: new devices drop in with a bounce, a ripple spreads from the bought device, cable flow speeds up briefly.

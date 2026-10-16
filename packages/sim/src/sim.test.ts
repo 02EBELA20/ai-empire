@@ -8,6 +8,8 @@ import {
   isUnlocked,
   network,
   offlineEarnings,
+  optimize,
+  planOptimize,
   planPurchase,
   reboot,
   tap,
@@ -163,5 +165,47 @@ describe('prestige reboot', () => {
     expect(s.lifetime).toBe(0);
     s.levels = { basic_pc: 10 };
     expect(network(cfg, s).income).toBeGreaterThan(incomeBefore);
+  });
+});
+
+describe('optimize', () => {
+  it('does nothing when the network is already at 100%', () => {
+    const s = richState();
+    s.levels = { basic_pc: 5 };
+    expect(planOptimize(cfg, s).items).toEqual([]);
+    expect(optimize(cfg, s)).toBeNull();
+  });
+
+  it('buys the cheapest infrastructure until efficiency is restored', () => {
+    const s = richState();
+    s.levels = { basic_pc: 30, gpu_rack: 12 };
+    expect(network(cfg, s).eff).toBeLessThan(0.999);
+    const before = s.credits;
+    const plan = optimize(cfg, s);
+    expect(plan).not.toBeNull();
+    expect(plan!.items.length).toBeGreaterThan(0);
+    expect(network(cfg, s).eff).toBeGreaterThanOrEqual(0.999);
+    expect(before - s.credits).toBeCloseTo(plan!.total, 6);
+    expect(plan!.items.every((i) => i === 'power_gen' || i === 'cooling')).toBe(true);
+  });
+
+  it('is all-or-nothing when the player cannot afford it', () => {
+    const s = richState();
+    s.levels = { basic_pc: 30, gpu_rack: 12 };
+    s.credits = 1;
+    const levels = { ...s.levels };
+    expect(optimize(cfg, s)).toBeNull();
+    expect(s.credits).toBe(1);
+    expect(s.levels).toEqual(levels);
+  });
+
+  it('reports a locked plan when the needed infrastructure is not unlocked', () => {
+    const s = createState(cfg, T0);
+    s.credits = 1e9;
+    s.lifetime = 0;
+    s.levels = { basic_pc: 80 };
+    const plan = planOptimize(cfg, s);
+    expect(plan.items.length === 0 || plan.unlocked === false).toBe(true);
+    if (!plan.unlocked) expect(optimize(cfg, s)).toBeNull();
   });
 });
