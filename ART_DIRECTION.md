@@ -1,6 +1,6 @@
 # ART DIRECTION — AI Empire
 
-Status: default direction, revisitable (see D-003, D-004).
+Status: FINAL direction (D-003, D-004). Changes need a new decision entry.
 
 ## Style
 - Isometric 3D, stylized low-poly with emissive glow accents (readable and cheap on mid-range phones).

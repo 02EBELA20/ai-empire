@@ -17,7 +17,6 @@
 ## Known issues / limitations
 - Economy v0 is a draft: no taps, research, managers, AI products or prestige multiplier in the simulation.
 - Mid-game plateau after day 4 (see ECONOMY.md findings).
-- D-003 and D-004 (visual style, tone) were accepted by default, not explicitly chosen by the owner.
 
 ## Pending tasks
 1. Owner reviews the documents and open questions in DECISIONS.md.
@@ -26,7 +25,7 @@
 4. Real Android performance test (go/no-go, D-001).
 
 ## Next recommended action
-Owner approval of M1 → start M2 on branch `claude/m2-prototype`.
+Owner explicit go for M2 → start on branch `claude/m2-prototype`. (Style D-003/D-004 are final.)
 
 ## Do not overwrite
 Nothing from ChatGPT exists yet. If `gpt/*` branches appear, merge by pull request; do not force-push `main`.

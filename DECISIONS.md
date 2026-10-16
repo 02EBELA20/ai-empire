@@ -6,9 +6,9 @@ Format: **D-xxx — Topic — Decision — Reason — Date — Status**
 
 **D-002 — MVP scope — 6 devices, 1 AI product line, Device Fusion and extra AI lines postponed — Protects the core loop and schedule — 2026-10-15 — Accepted**
 
-**D-003 — Visual style — Stylized low-poly with emissive glow (not realistic) — Mid-range phone performance and readability — 2026-10-15 — Accepted by default; the owner approved the plan but did not answer this question separately. Revisit before M4.**
+**D-003 — Visual style — Stylized low-poly with emissive glow (not realistic) — Mid-range phone performance, fast asset production, and glow/energy-flow readability (the core 'wow' moment); realistic style rejected on performance and production cost — 2026-10-15 — FINAL (owner delegated the choice to Claude's recommendation).**
 
-**D-004 — Tone — Clean neon-tech with friendly proportions — Fits the AI theme without feeling cold — 2026-10-15 — Accepted by default; revisit before M4.**
+**D-004 — Tone — Clean neon-tech with friendly proportions — Fits the AI theme without feeling cold, stays readable on small screens, and differentiates from existing idle-miner visuals — 2026-10-15 — FINAL (owner delegated the choice to Claude's recommendation).**
 
 **D-005 — Platform order — Android first, iOS later — Lower cost, faster iteration — 2026-10-15 — Accepted**
 
