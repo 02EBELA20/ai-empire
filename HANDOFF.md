@@ -1,11 +1,14 @@
 # HANDOFF
 
-- **Project version:** 0.2.0-m2 (Milestone 2: Playable Core Prototype, in progress)
-- **Latest stable commit:** `55b57d3` (M1 docs, economy data, simulator)
-- **Current working branch:** `claude/m2-prototype` (based on `claude/m1-planning` = `main`)
+- **Project version:** 0.3.0-m3a (M2 merged to `main`; M3 Connection Network, in progress)
+- **Latest stable commit on main:** `9e702db` (M2 prototype)
+- **Current working branch:** `claude/m3-network` (based on `main`)
 - **Repository:** https://github.com/02EBELA20/ai-empire
 
-## M2 status (branch claude/m2-prototype)
+## M3-A status (branch claude/m3-network)
+- Added build animation, ripple, bottleneck ring/ghost slot, milestone bars (see CHANGELOG 0.3.0-m3a). 38 tests pass; effects not visually verified in sandbox (owner screenshots are the visual check).
+
+## M2 status (merged into main)
 - Playable web prototype implemented (see CHANGELOG 0.2.0-m2). Run: `npm install`, `npm run dev`, `npm test`, `npm run build:single`.
 - Verified: `tsc --noEmit` clean, 36 unit/integration tests pass, production builds succeed.
 - NOT verified: actual rendering in a browser/phone (no browser available in the build sandbox), real Android FPS (D-001 go/no-go still open).
@@ -27,7 +30,7 @@
 1. Owner plays the preview and reports feel/pacing/bugs.
 2. Fix issues found, tune `packages/data/economy.json` with the simulator.
 3. Real Android performance test (go/no-go, D-001).
-4. Merge `claude/m2-prototype` into `main` after owner approval.
+4. Next M3 steps: per-cluster network model (partial throttling), Optimize button, device inspector.
 
 ## Next recommended action
 Owner feedback on the playable preview, then phone FPS test. (Style D-003/D-004 are final.)

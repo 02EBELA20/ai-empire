@@ -6,6 +6,7 @@ import {
   cost,
   getDevice,
   milestoneMult,
+  nextMilestone,
   prestigeMultiplier,
   prestigePoints,
   type EconomyConfig,
@@ -30,6 +31,20 @@ describe('cost and milestones', () => {
     expect(milestoneMult(cfg, 100)).toBe(8);
     expect(milestoneMult(cfg, 200)).toBe(16);
     expect(milestoneMult(cfg, 400)).toBe(32);
+  });
+});
+
+describe('next milestone', () => {
+  it('points at the next doubling level and remembers the previous one', () => {
+    expect(nextMilestone(cfg, 0)).toEqual({ prev: 0, at: 25 });
+    expect(nextMilestone(cfg, 24)).toEqual({ prev: 0, at: 25 });
+    expect(nextMilestone(cfg, 25)).toEqual({ prev: 25, at: 50 });
+    expect(nextMilestone(cfg, 399)).toEqual({ prev: 200, at: 400 });
+  });
+
+  it('returns null once every milestone is reached', () => {
+    expect(nextMilestone(cfg, 400)).toBeNull();
+    expect(nextMilestone(cfg, 9999)).toBeNull();
   });
 });
 

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.3.0-m3a — 2026-10-15 (branch claude/m3-network)
+### Added
+- Purchase feedback: new devices drop in with a bounce, a ripple spreads from the bought device, cable flow speeds up briefly.
+- Bottleneck guidance in the scene: the limiting device type gets a pulsing red ring; if none is built yet, a pulsing ghost outline shows where it would go.
+- Milestone progress bar on each producer row ("x2 income at Lv N").
+- `nextMilestone` in the economy package (+2 tests, 38 total).
+### Fixed
+- Infrastructure rows no longer show an empty milestone bar.
+
 ## 0.2.0-m2 — 2026-10-15 (branch claude/m2-prototype)
 ### Added
 - TypeScript project: Vite, Vitest, Three.js. Packages: `economy` (formulas), `sim` (game state, tick, bundle purchase, offline, prestige), `save` (versioned, validated save/load).

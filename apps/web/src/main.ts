@@ -1,7 +1,7 @@
 import './style.css';
 import economyJson from '@data/economy.json';
 import type { EconomyConfig } from '@economy';
-import { applyOffline, buy, createState, network, reboot, tap, tick, type GameState } from '@sim';
+import { applyOffline, buy, createState, network, planPurchase, reboot, tap, tick, type GameState } from '@sim';
 import { loadGame, saveGame, type StorageLike } from '@save';
 import { GameScene } from './scene';
 import { createUI } from './ui';
@@ -40,9 +40,10 @@ const scene = new GameScene(document.getElementById('view') as HTMLCanvasElement
 
 const ui = createUI(cfg, {
   onBuy(id) {
+    const plan = planPurchase(cfg, state, id);
     if (buy(cfg, state, id)) {
-      scene.flash(id);
       refresh();
+      for (const pid of new Set(plan.items)) scene.flash(pid);
     }
   },
   onTap() {

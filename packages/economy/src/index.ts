@@ -91,6 +91,16 @@ export function computeNetwork(cfg: EconomyConfig, levels: Levels, prestigeMult 
   };
 }
 
+/** Progress toward the next income-doubling milestone: `prev` is the last one reached, `at` the next. Null past the last. */
+export function nextMilestone(cfg: EconomyConfig, level: number): { prev: number; at: number } | null {
+  let prev = 0;
+  for (const l of cfg.milestones.levels) {
+    if (level < l) return { prev, at: l };
+    prev = l;
+  }
+  return null;
+}
+
 export type Bottleneck = 'power' | 'cooling' | null;
 
 export function bottleneck(net: NetworkResult): Bottleneck {

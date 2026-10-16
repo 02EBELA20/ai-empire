@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { NetworkResult } from '@economy';
+import { bottleneck, type NetworkResult } from '@economy';
 import type { GameState } from '@sim';
 
 type V2 = [number, number];
@@ -75,6 +75,10 @@ function buildLayout(s: GameState): Layout {
 }
 
 interface DeviceVisual {
+  key: string;
+  /** Spawn progress 0..1; 1 = fully built. New devices animate in from 0. */
+  born: number;
+  warn: THREE.Mesh | null;
   group: THREE.Group;
   spinners: { obj: THREE.Object3D; speed: number; axis: 'y' | 'x' }[];
   statusMats: THREE.MeshStandardMaterial[];
@@ -121,7 +125,7 @@ function makeFan(r: number, color: number): THREE.Group {
 
 function makeDevice(id: string, stage: number): DeviceVisual {
   const g = new THREE.Group();
-  const v: DeviceVisual = { group: g, spinners: [], statusMats: [], baseStatus: 0xffffff };
+  const v: DeviceVisual = { key: '', born: 1, warn: null, group: g, spinners: [], statusMats: [], baseStatus: 0xffffff };
   switch (id) {
     case 'basic_pc': {
       const h = 0.28 + stage * 0.05;
@@ -224,6 +228,11 @@ export class GameScene {
   private tgtZoom = 1;
   private signature = '';
   private visuals: { id: string; v: DeviceVisual }[] = [];
+  private known = new Set<string>();
+  private firstBuild = true;
+  private ripples: { mesh: THREE.Mesh; t: number }[] = [];
+  private boost = 0;
+  private ghost: THREE.LineSegments;
   private flashes = new Map<string, number>();
   private particles: Particle[] = [];
   private pMesh: THREE.InstancedMesh | null = null;
@@ -242,6 +251,10 @@ export class GameScene {
     sun.position.set(6, 12, 4);
     this.scene.add(sun);
     this.scene.add(this.ground);
+    const gm = new THREE.LineBasicMaterial({ color: 0xff5a5a, transparent: true });
+    this.ghost = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.9, 0.6, 0.9)), gm);
+    this.ghost.visible = false;
+    this.scene.add(this.ghost);
     const rim = new THREE.DirectionalLight(0x7fa0ff, 0.55);
     rim.position.set(-8, 6, -6);
     this.scene.add(rim);
@@ -293,7 +306,7 @@ export class GameScene {
 
   private rebuildGround(layout: Layout): void {
     const FP: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
-    let x0 = 1.0, x1 = 5.0, z0 = -1.0, z1 = 2.6;
+    let x0 = 0, x1 = 5.0, z0 = -1.5, z1 = 2.6;
     for (const p of layout.placed) {
       const f = FP[p.id] ?? [1, 1];
       x0 = Math.min(x0, p.pos[0]);
@@ -319,20 +332,46 @@ export class GameScene {
     this.fit();
   }
 
+  /** Purchase feedback: bump the device type, send a ripple from it and speed up the cable flow for a moment. */
   flash(id: string): void {
     this.flashes.set(id, 1);
+    this.boost = 1;
+    const hit = this.visuals.find((x) => x.id === id);
+    if (!hit) return;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.3, 0.4, 48),
+      new THREE.MeshBasicMaterial({ color: 0xbfd0ff, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(hit.v.group.position.x + 0.5, 0.05, hit.v.group.position.z + 0.5);
+    this.scene.add(ring);
+    this.ripples.push({ mesh: ring, t: 0 });
   }
 
   private rebuild(layout: Layout): void {
     this.rebuildGround(layout);
     this.content.clear();
     this.visuals = [];
+    const nextKnown = new Set<string>();
     for (const p of layout.placed) {
       const v = makeDevice(p.id, p.stage);
+      v.key = `${p.id}@${p.pos.join(',')}`;
+      nextKnown.add(v.key);
+      if (!this.firstBuild && !this.known.has(v.key)) v.born = 0;
       v.group.position.set(p.pos[0], 0, p.pos[1]);
+      if (p.id === 'cooling' || p.id === 'power_gen') {
+        const w = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.045, 6, 20), new THREE.MeshBasicMaterial({ color: 0xff5a5a }));
+        w.rotation.x = Math.PI / 2;
+        w.position.set(0.45, 2.1, 0.45);
+        w.visible = false;
+        v.group.add(w);
+        v.warn = w;
+      }
       this.content.add(v.group);
       this.visuals.push({ id: p.id, v });
     }
+    this.known = nextKnown;
+    this.firstBuild = false;
     this.particles = [];
     const baseMats = {
       power: mat(0x5a4310),
@@ -379,6 +418,26 @@ export class GameScene {
   frame(dt: number, net: NetworkResult): void {
     this.t += dt;
     const throttled = net.eff < 0.999;
+    const lim = bottleneck(net);
+    const limitId = lim === 'cooling' ? 'cooling' : lim === 'power' ? 'power_gen' : null;
+    const ghostOn = limitId !== null && !this.visuals.some((x) => x.id === limitId);
+    this.ghost.visible = ghostOn;
+    if (ghostOn) {
+      this.ghost.position.set(0.45, 0.3, limitId === 'cooling' ? 0.45 : -1.05);
+      (this.ghost.material as THREE.LineBasicMaterial).opacity = 0.45 + 0.4 * Math.sin(this.t * 5);
+    }
+    this.boost = Math.max(0, this.boost - dt * 1.1);
+    for (let i = this.ripples.length - 1; i >= 0; i--) {
+      const r = this.ripples[i]!;
+      r.t += dt * 1.5;
+      const sc = 1 + r.t * 9;
+      r.mesh.scale.set(sc, sc, sc);
+      (r.mesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.8 * (1 - r.t));
+      if (r.t >= 1) {
+        this.scene.remove(r.mesh);
+        this.ripples.splice(i, 1);
+      }
+    }
     const spin = 0.35 + 0.65 * net.eff;
     for (const { id, v } of this.visuals) {
       for (const sp of v.spinners) sp.obj.rotation[sp.axis] += sp.speed * spin * dt;
@@ -389,8 +448,20 @@ export class GameScene {
         m.emissiveIntensity = bad ? 1.1 + 0.6 * Math.sin(this.t * 7) : 1.3;
       }
       const f = this.flashes.get(id) ?? 0;
-      const s = 1 + 0.09 * f;
+      if (v.born < 1) v.born = Math.min(1, v.born + dt * 2.2);
+      const b = v.born - 1;
+      const pop = v.born < 1 ? 1 + 2.70158 * b * b * b + 1.70158 * b * b : 1;
+      const s = Math.max(0.001, pop) * (1 + 0.09 * f);
       v.group.scale.set(s, s, s);
+      v.group.position.y = v.born < 1 ? (1 - v.born) * (1 - v.born) * 1.2 : 0;
+      if (v.warn) {
+        const limited = limitId === id;
+        v.warn.visible = limited;
+        if (limited) {
+          const pulse = 1 + 0.18 * Math.sin(this.t * 6);
+          v.warn.scale.set(pulse, pulse, pulse);
+        }
+      }
     }
     for (const [id, f] of this.flashes) {
       const nf = f - dt * 2.4;
@@ -400,7 +471,8 @@ export class GameScene {
     if (this.pMesh) {
       for (let i = 0; i < this.particles.length; i++) {
         const p = this.particles[i]!;
-        const speed = p.kind === 'data' ? 0.5 + 1.4 * net.eff : p.kind === 'power' ? 1.5 : 1.2;
+        const base = p.kind === 'data' ? 0.5 + 1.4 * net.eff : p.kind === 'power' ? 1.5 : 1.2;
+        const speed = base * (1 + 2.2 * this.boost);
         const d = (p.offset + this.t * speed) % p.total;
         let seg = 1;
         while (seg < p.cum.length - 1 && p.cum[seg]! < d) seg++;

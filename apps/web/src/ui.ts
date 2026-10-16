@@ -1,4 +1,4 @@
-import { bottleneck, computeNetwork, getDevice, prestigeMultiplier, type EconomyConfig, type NetworkResult } from '@economy';
+import { bottleneck, computeNetwork, getDevice, nextMilestone, prestigeMultiplier, type EconomyConfig, type NetworkResult } from '@economy';
 import { canAfford, planPurchase, prestigeGain, tapValue, type GameState } from '@sim';
 import { formatDuration, formatNum } from './format';
 
@@ -30,8 +30,11 @@ interface RowRefs {
   root: HTMLElement;
   lvl: HTMLElement;
   sub: HTMLElement;
+  ms: HTMLElement;
+  msBar: HTMLElement;
+  msText: HTMLElement;
   btn: HTMLButtonElement;
-  last: { sub: string; btn: string; poor: boolean; locked: boolean; hidden: boolean };
+  last: { sub: string; btn: string; ms: string; poor: boolean; locked: boolean; hidden: boolean };
 }
 
 export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
@@ -64,7 +67,7 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
     root.className = 'row-item';
     root.innerHTML = `
       <div class="chip" style="background:${meta.color}"></div>
-      <div><div class="name">${meta.name}<span class="lvl">Lv 0</span></div><div class="sub"></div></div>
+      <div><div class="name">${meta.name}<span class="lvl">Lv 0</span></div><div class="sub"></div><div class="ms"><i></i><span></span></div></div>
       <button class="buy"></button>`;
     list.appendChild(root);
     const btn = root.querySelector('.buy') as HTMLButtonElement;
@@ -76,8 +79,11 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
       root,
       lvl: root.querySelector('.lvl') as HTMLElement,
       sub: root.querySelector('.sub') as HTMLElement,
+      ms: root.querySelector('.ms') as HTMLElement,
+      msBar: root.querySelector('.ms i') as HTMLElement,
+      msText: root.querySelector('.ms span') as HTMLElement,
       btn,
-      last: { sub: '', btn: '', poor: false, locked: false, hidden: false },
+      last: { sub: '', btn: '', ms: '?', poor: false, locked: false, hidden: false },
     });
   }
 
@@ -147,6 +153,26 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
         if (poor !== r.last.poor) {
           r.btn.classList.toggle('poor', poor);
           r.last.poor = poor;
+        }
+        const lvNow = state.levels[d.id] ?? 0;
+        const showMs = unlocked && d.kind === 'producer';
+        let msKey = '';
+        if (showMs) {
+          const m = nextMilestone(cfg, lvNow);
+          msKey = m ? `${m.prev}|${m.at}|${lvNow}` : 'max';
+          if (msKey !== r.last.ms) {
+            if (m) {
+              r.msBar.style.width = `${Math.min(100, ((lvNow - m.prev) / (m.at - m.prev)) * 100)}%`;
+              r.msText.textContent = `x${cfg.milestones.multiplier} income at Lv ${m.at}`;
+            } else {
+              r.msBar.style.width = '100%';
+              r.msText.textContent = 'All milestones reached';
+            }
+          }
+        }
+        if (msKey !== r.last.ms) {
+          r.ms.style.display = showMs ? '' : 'none';
+          r.last.ms = msKey;
         }
         if (!unlocked !== r.last.locked) {
           r.root.classList.toggle('locked', !unlocked);
