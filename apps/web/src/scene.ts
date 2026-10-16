@@ -222,7 +222,8 @@ export class GameScene {
   private camera = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 100);
   private content = new THREE.Group();
   private ground = new THREE.Group();
-  private bounds = { x0: 0, x1: 6, z0: -1.5, z1: 4.5 };
+  /** Tight box around the built devices; the camera frames this, the slab may bleed past the screen edges. */
+  private focus = { x0: 0, x1: 4, z0: -1.5, z1: 2 };
   private curCenter = new THREE.Vector3(3, 0, 1.5);
   private tgtCenter = new THREE.Vector3(3, 0, 1.5);
   private tgtZoom = 1;
@@ -290,8 +291,13 @@ export class GameScene {
   private rebuildGround(layout: Layout): void {
     const FP: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
     let x0 = 0, x1 = 5.0, z0 = -1.5, z1 = 2.6;
+    let fx0 = Infinity, fx1 = -Infinity, fz0 = Infinity, fz1 = -Infinity;
     for (const p of layout.placed) {
       const f = FP[p.id] ?? [1, 1];
+      fx0 = Math.min(fx0, p.pos[0]);
+      fx1 = Math.max(fx1, p.pos[0] + f[0]);
+      fz0 = Math.min(fz0, p.pos[1]);
+      fz1 = Math.max(fz1, p.pos[1] + f[1]);
       x0 = Math.min(x0, p.pos[0]);
       x1 = Math.max(x1, p.pos[0] + f[0]);
       z0 = Math.min(z0, p.pos[1]);
@@ -301,7 +307,7 @@ export class GameScene {
     x1 = Math.ceil(x1 + 1);
     z0 = Math.floor(z0 - 1);
     z1 = Math.ceil(z1 + 1);
-    this.bounds = { x0, x1, z0, z1 };
+    if (Number.isFinite(fx0)) this.focus = { x0: fx0 - 0.5, x1: fx1 + 0.5, z0: fz0 - 0.5, z1: fz1 + 0.5 };
     this.ground.clear();
     const slab = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.3, z1 - z0), mat(0x1a2347));
     slab.position.set((x0 + x1) / 2, -0.15, (z0 + z1) / 2);
@@ -474,10 +480,10 @@ export class GameScene {
       if (this.pMesh.instanceColor) this.pMesh.instanceColor.needsUpdate = true;
     }
     this.camera.updateMatrixWorld();
-    const bb = this.bounds;
+    const bb = this.focus;
     let nx0 = Infinity, nx1 = -Infinity, ny0 = Infinity, ny1 = -Infinity;
     const pv = new THREE.Vector3();
-    for (const x of [bb.x0, bb.x1]) for (const z of [bb.z0, bb.z1]) for (const y of [-0.3, 1.9]) {
+    for (const x of [bb.x0, bb.x1]) for (const z of [bb.z0, bb.z1]) for (const y of [0, 1.1]) {
       pv.set(x, y, z).project(this.camera);
       nx0 = Math.min(nx0, pv.x);
       nx1 = Math.max(nx1, pv.x);
