@@ -125,24 +125,24 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
     const meta = META[id] ?? { name: id, color: '#888', blurb: '' };
     const n = state.levels[id] ?? 0;
     const pm = prestigeMultiplier(cfg, state.neuralPoints);
-    const rows: [string, string][] = [['Level', String(n)], ['Next level costs', formatNum(cost(d, n))]];
+    const rows: [string, string][] = [['Level', String(n)], ['Next level', formatNum(cost(d, n))]];
     let note = meta.blurb;
     if (d.kind === 'producer') {
       const mult = milestoneMult(cfg, n);
       const own = (d.baseIncome ?? 0) * n * mult * net.eff * net.link * pm;
       const share = net.income > 0 ? (own / net.income) * 100 : 0;
-      rows.push(['Output', `${formatNum(own)}/s`], ['Share of income', `${share.toFixed(0)}%`], ['Milestone bonus', `x${mult}`]);
-      rows.push(['Draws', `${formatNum((d.power ?? 0) * n)} power, ${formatNum((d.heat ?? 0) * n)} heat`]);
+      rows.push(['Output', `${formatNum(own)}/s`], ['Income share', `${share.toFixed(0)}%`], ['Milestone', `x${mult}`]);
+      rows.push(['Power draw', formatNum((d.power ?? 0) * n)], ['Heat', formatNum((d.heat ?? 0) * n)]);
       if (net.eff < 0.999) note = `Running at ${Math.round(net.eff * 100)}% because of ${bottleneck(net)}. Output without the bottleneck: ${formatNum(own / net.eff)}/s.`;
     } else if (d.kind === 'power') {
-      rows.push(['Supply', `${formatNum((d.supply ?? 0) * n)} (+${cfg.starterSupply.power} built in)`], ['Network power', `${formatNum(net.powerSupply)} / ${formatNum(net.powerDemand)} used`]);
+      rows.push(['Supply', formatNum((d.supply ?? 0) * n)], ['Network', `${formatNum(net.powerDemand)} / ${formatNum(net.powerSupply)}`]);
     } else if (d.kind === 'cooling') {
-      rows.push(['Supply', `${formatNum((d.supply ?? 0) * n)} (+${cfg.starterSupply.cooling} built in)`], ['Network cooling', `${formatNum(net.coolingSupply)} / ${formatNum(net.heatDemand)} heat`]);
+      rows.push(['Supply', formatNum((d.supply ?? 0) * n)], ['Network', `${formatNum(net.heatDemand)} / ${formatNum(net.coolingSupply)}`]);
     } else {
-      rows.push(['Income bonus', `+${Math.round((net.link - 1) * 100)}% (max +${Math.round(cfg.hub.maxBonus * 100)}%)`]);
+      rows.push(['Bonus', `+${Math.round((net.link - 1) * 100)}%`], ['Max', `+${Math.round(cfg.hub.maxBonus * 100)}%`]);
     }
     const html = `<div class="ih"><i style="background:${meta.color}"></i><b>${meta.name}</b><button data-close aria-label="Close">×</button></div>
-      <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl><p>${note}</p>`;
+      <dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl><p>${note}</p>`;
     if (html !== inspLast) {
       insp.innerHTML = html;
       inspLast = html;
