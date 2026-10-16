@@ -291,7 +291,8 @@ export class GameScene {
   private rebuildGround(layout: Layout): void {
     const FP: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
     let x0 = 0, x1 = 5.0, z0 = -1.5, z1 = 2.6;
-    let fx0 = Infinity, fx1 = -Infinity, fz0 = Infinity, fz1 = -Infinity;
+    // Never frame tighter than the default base area, so early game is not over-zoomed and there is room to grow.
+    let fx0 = 0, fx1 = 4.6, fz0 = -1.5, fz1 = 2;
     for (const p of layout.placed) {
       const f = FP[p.id] ?? [1, 1];
       fx0 = Math.min(fx0, p.pos[0]);
@@ -307,7 +308,7 @@ export class GameScene {
     x1 = Math.ceil(x1 + 1);
     z0 = Math.floor(z0 - 1);
     z1 = Math.ceil(z1 + 1);
-    if (Number.isFinite(fx0)) this.focus = { x0: fx0 - 0.5, x1: fx1 + 0.5, z0: fz0 - 0.5, z1: fz1 + 0.5 };
+    this.focus = { x0: fx0 - 0.5, x1: fx1 + 0.5, z0: fz0 - 0.5, z1: fz1 + 0.5 };
     this.ground.clear();
     const slab = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.3, z1 - z0), mat(0x1a2347));
     slab.position.set((x0 + x1) / 2, -0.15, (z0 + z1) / 2);
@@ -523,7 +524,7 @@ export class GameScene {
     this.curCenter.lerp(this.tgtCenter, k);
     const z = this.camera.zoom + (this.tgtZoom - this.camera.zoom) * k;
     if (Math.abs(z - this.camera.zoom) > 1e-4) {
-      this.camera.zoom = Math.max(0.2, Math.min(6, z));
+      this.camera.zoom = Math.max(0.2, Math.min(3, z));
       this.camera.updateProjectionMatrix();
     }
     this.camera.position.copy(this.curCenter).add(new THREE.Vector3(10, 10, 10));

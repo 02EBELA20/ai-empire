@@ -126,13 +126,13 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
     const n = state.levels[id] ?? 0;
     const pm = prestigeMultiplier(cfg, state.neuralPoints);
     const rows: [string, string][] = [['Level', String(n)], ['Next level', formatNum(cost(d, n))]];
-    let note = meta.blurb;
+    let note = '';
     if (d.kind === 'producer') {
       const mult = milestoneMult(cfg, n);
       const own = (d.baseIncome ?? 0) * n * mult * net.eff * net.link * pm;
       const share = net.income > 0 ? (own / net.income) * 100 : 0;
       rows.push(['Output', `${formatNum(own)}/s`], ['Income share', `${share.toFixed(0)}%`], ['Milestone', `x${mult}`]);
-      rows.push(['Power draw', formatNum((d.power ?? 0) * n)], ['Heat', formatNum((d.heat ?? 0) * n)]);
+      rows.push(['Power / heat', `${formatNum((d.power ?? 0) * n)} / ${formatNum((d.heat ?? 0) * n)}`]);
       if (net.eff < 0.999) note = `Running at ${Math.round(net.eff * 100)}% because of ${bottleneck(net)}. Output without the bottleneck: ${formatNum(own / net.eff)}/s.`;
     } else if (d.kind === 'power') {
       rows.push(['Supply', formatNum((d.supply ?? 0) * n)], ['Network', `${formatNum(net.powerDemand)} / ${formatNum(net.powerSupply)}`]);
@@ -142,7 +142,7 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
       rows.push(['Bonus', `+${Math.round((net.link - 1) * 100)}%`], ['Max', `+${Math.round(cfg.hub.maxBonus * 100)}%`]);
     }
     const html = `<div class="ih"><i style="background:${meta.color}"></i><b>${meta.name}</b><button data-close aria-label="Close">×</button></div>
-      <dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl><p>${note}</p>`;
+      <dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>${note ? `<p>${note}</p>` : ''}`;
     if (html !== inspLast) {
       insp.innerHTML = html;
       inspLast = html;
