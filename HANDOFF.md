@@ -28,12 +28,15 @@
 2. Fix issues found, tune `packages/data/economy.json` with the simulator.
 3. Real Android performance test (go/no-go, D-001).
 4. Merge `claude/m2-prototype` into `main` after owner approval.
+5. Review Milestone 4 art specification in `docs/art/ART_DIRECTION_V2.md`, `DEVICES.md`, `ENVIRONMENT.md`, `UI_STYLE.md`, `IMAGE_PROMPTS.md`, and `BLENDER_GUIDE.md`; see `docs/art/PRODUCTION_ORDER.md` for production sequence. Confirm mobile silhouette readability and validate full-scene draw-call/triangle budgets before implementation. ChatGPT art direction is documentation only; no assets or game code are implemented by this change.
+6. Reconcile root `ART_DIRECTION.md` (D-003/D-004, neon low-poly) with `docs/art/ART_DIRECTION_V2.md` (industrial workshop) in a new DECISIONS.md entry once the owner approves the final direction.
 
 ## Next recommended action
 Owner feedback on the playable preview, then phone FPS test. (Style D-003/D-004 are final.)
 
 ## Do not overwrite
 Nothing from ChatGPT exists yet. If `gpt/*` branches appear, merge by pull request; do not force-push `main`.
+`gpt/art-direction` holds ChatGPT's Art Direction V2 package under `docs/art/` (documentation only). Do not rewrite those files; propose changes on a separate branch. It was branched from `main`, so its HANDOFF.md predates the unmerged `claude/m3-network` HANDOFF edits: expect a small conflict in this file's Pending tasks when both are merged.
 
 ## Commit status
 Content commit `55b57d3` on `claude/m1-planning`; this file was updated with that hash in a follow-up commit. `main` is fast-forwarded to the same content.
