@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.3.2-m4prep — 2026-10-16 (branch claude/m3-network)
+### Added
+- Device asset contract (D-018, `docs/ASSET_CONTRACT.md`): file names, folder `apps/web/assets/models/devices/`, meters, Y-up, pivot at the footprint center, sizes, triangle budgets, socket and fan naming. Data in `packages/data/device-assets.json`.
+- `packages/assets`: stage rule and contract checks (pure, tested).
+- GLB loader (`apps/web/src/deviceAssets.ts`): finds models at build time, validates them, rejects broken ones with a console message, scales 1 m to 0.25 world units, spins `fan_*` nodes, tints `emissive*` materials when throttled. The built-in placeholders stay for anything missing, so the game is unchanged until a model arrives.
+- 23 new tests (65 total), including a loader test on an in-memory GLB.
+- Decisions D-013..D-018 recorded (D-013, D-015, D-016 amended after ChatGPT review; D-017 lists conflicts of Art Direction V2 with D-003, D-004, D-014).
+### Changed
+- Spinning parts now rotate around their own local axis.
+- Single-file preview grows by about 120 KB (GLTFLoader).
+### Not changed
+- No model exists yet, no economy change, D-003/D-004 and root ART_DIRECTION.md untouched.
+
+
 ## 0.3.1-m3b — 2026-10-16 (branch claude/m3-network)
 ### Added
 - Optimize button (appears only while throttled): buys the cheapest power/cooling needed to restore 100% efficiency, all-or-nothing, shows its cost. `planOptimize` / `optimize` in the sim package (+4 tests, 42 total).

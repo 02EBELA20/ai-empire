@@ -1,9 +1,14 @@
 # HANDOFF
 
-- **Project version:** 0.3.1-m3b (M2 merged to `main`; M3 Connection Network, in progress)
+- **Project version:** 0.3.2-m4prep (M2 merged to `main`; M3 Connection Network, in progress)
 - **Latest stable commit on main:** `9e702db` (M2 prototype)
 - **Current working branch:** `claude/m3-network` (based on `main`)
 - **Repository:** https://github.com/02EBELA20/ai-empire
+
+## M4 prep status (branch claude/m3-network)
+- The game can accept `gpu_rack_s1.glb` (and any `<device_id>_s<1-4>.glb`) dropped in `apps/web/assets/models/devices/`; contract in `docs/ASSET_CONTRACT.md`, decisions D-013..D-018. 65 tests pass; tsc and both builds clean.
+- NOT verified: loading a real Blender model in a browser (no model exists; the loader is tested only on an in-memory GLB), draw calls and FPS on a phone.
+- Waiting on: ChatGPT to confirm the gpu_rack proportions (4 x 4 m footprint but only 1.6 m high); owner to confirm the D-004 tone change and the prestige-linked campus; then ChatGPT/Blender produce `gpu_rack_s1.glb` and one floor tile.
 
 ## M3-B status (branch claude/m3-network)
 - Optimize button and device inspector added (see CHANGELOG 0.3.1-m3b). 42 tests pass. Camera now frames the device cluster. Tap-to-inspect (raycast) and the visual layout are not verified in a browser; owner screenshots are the check.
