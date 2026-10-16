@@ -47,7 +47,7 @@ export function createUI(cfg: EconomyConfig, h: UIHandlers): UI {
   dock.innerHTML = `
     <div class="toolbar"><button class="tap" id="tap">TAP</button><button class="reboot" id="reboot"></button></div>
     <div class="list" id="list"></div>
-    <div class="foot"><span>AI Empire v0.2 prototype</span><button id="reset">Reset save</button></div>`;
+    <div class="foot"><span>AI Empire v0.3 prototype</span><button id="reset">Reset save</button></div>`;
 
   const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const cr = el('cr'), inc = el('inc'), eff = el('eff'), np = el('np'), hint = el('hint');

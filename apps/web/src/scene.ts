@@ -226,6 +226,7 @@ export class GameScene {
   private curCenter = new THREE.Vector3(3, 0, 1.5);
   private tgtCenter = new THREE.Vector3(3, 0, 1.5);
   private tgtZoom = 1;
+  private snap = 4;
   private signature = '';
   private visuals: { id: string; v: DeviceVisual }[] = [];
   private known = new Set<string>();
@@ -281,27 +282,9 @@ export class GameScene {
     this.fit();
   }
 
-  /** Frames the built area: computes the target zoom/centre from the ground bounds in view space. */
+  /** Framing is closed-loop (see frame()): it measures the real projected size each frame, so nothing to precompute. */
   private fit(): void {
-    const { x0, x1, z0, z1 } = this.bounds;
-    const c = new THREE.Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
-    const q = this.camera.quaternion;
-    const inv = q.clone().invert();
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const x of [x0, x1]) for (const z of [z0, z1]) for (const y of [-0.3, 1.9]) {
-      const p = new THREE.Vector3(x, y, z).sub(c).applyQuaternion(inv);
-      minX = Math.min(minX, p.x);
-      maxX = Math.max(maxX, p.x);
-      minY = Math.min(minY, p.y);
-      maxY = Math.max(maxY, p.y);
-    }
-    const hx = (maxX - minX) / 2;
-    const hy = (maxY - minY) / 2;
-    const aspect = this.camera.right / 5;
-    this.tgtZoom = Math.min((5 * aspect) / (hx * 1.06), 5 / (hy * 1.06));
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
-    this.tgtCenter.copy(c).addScaledVector(right, (minX + maxX) / 2).addScaledVector(up, (minY + maxY) / 2);
+    this.snap = 4;
   }
 
   private rebuildGround(layout: Layout): void {
@@ -490,11 +473,31 @@ export class GameScene {
       this.pMesh.instanceMatrix.needsUpdate = true;
       if (this.pMesh.instanceColor) this.pMesh.instanceColor.needsUpdate = true;
     }
-    const k = 1 - Math.exp(-3.5 * dt);
+    this.camera.updateMatrixWorld();
+    const bb = this.bounds;
+    let nx0 = Infinity, nx1 = -Infinity, ny0 = Infinity, ny1 = -Infinity;
+    const pv = new THREE.Vector3();
+    for (const x of [bb.x0, bb.x1]) for (const z of [bb.z0, bb.z1]) for (const y of [-0.3, 1.9]) {
+      pv.set(x, y, z).project(this.camera);
+      nx0 = Math.min(nx0, pv.x);
+      nx1 = Math.max(nx1, pv.x);
+      ny0 = Math.min(ny0, pv.y);
+      ny1 = Math.max(ny1, pv.y);
+    }
+    const spanX = Math.max(1e-3, nx1 - nx0);
+    const spanY = Math.max(1e-3, ny1 - ny0);
+    this.tgtZoom = this.camera.zoom * Math.min(1.84 / spanX, 1.84 / spanY);
+    const halfW = (this.camera.right - this.camera.left) / 2 / this.camera.zoom;
+    const halfH = (this.camera.top - this.camera.bottom) / 2 / this.camera.zoom;
+    const rVec = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    const uVec = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    this.tgtCenter.copy(this.curCenter).addScaledVector(rVec, ((nx0 + nx1) / 2) * halfW).addScaledVector(uVec, ((ny0 + ny1) / 2) * halfH);
+    const k = this.snap > 0 ? 1 : 1 - Math.exp(-3.5 * dt);
+    if (this.snap > 0) this.snap--;
     this.curCenter.lerp(this.tgtCenter, k);
     const z = this.camera.zoom + (this.tgtZoom - this.camera.zoom) * k;
     if (Math.abs(z - this.camera.zoom) > 1e-4) {
-      this.camera.zoom = z;
+      this.camera.zoom = Math.max(0.2, Math.min(6, z));
       this.camera.updateProjectionMatrix();
     }
     this.camera.position.copy(this.curCenter).add(new THREE.Vector3(10, 10, 10));
