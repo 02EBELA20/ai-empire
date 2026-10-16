@@ -26,6 +26,16 @@ Format: **D-xxx — Topic — Decision — Reason — Date — Status**
 
 **D-012 — Preview build — `vite build --mode single` inlines everything into one HTML for quick sharing/previews; the normal build stays multi-file — The source stays modular (no monolith); the single file is only a build artifact — 2026-10-15 — Accepted**
 
+**D-013 — Texture atlases — One atlas per device family (6 families: 512–1K each, all four stages share it) plus one environment atlas, not a single shared 1K atlas — At 128 px/m a single 1K atlas holds ~64 m² of unique surface but the 24 device models need ~500 m²; per-family atlases keep draw calls low because each (device, stage) is one InstancedMesh with one material — 2026-10-16 — Accepted (owner delegated; revisit after the gpu_rack vertical slice is measured on a real phone)**
+
+**D-014 — Base expansion — The workshop grows with run progress, driven by data in economy.json: 8x8 at start, 12x12 at the Network Hub unlock (lifetime 40K), 18x18 at the AI Core unlock (lifetime 2M), 24x24 campus kept permanently after the first prestige (Neural Points >= 1) — Starter interior is 36 tiles while a maxed device set needs 51, so growth must coincide with unlocks; lifetime credits are the existing unlock axis, and the prestige reward becomes visible — 2026-10-16 — Accepted as a placeholder (thresholds to be tuned with the simulator in M4; expansion is cosmetic space only, no new income)**
+
+**D-015 — Instancing rule for M4 art — Merge each model to one mesh/material and use one InstancedMesh per (device id, stage); fans and the cable/particle systems are instanced too; per-instance state (throttled, just-built) goes through an instanced attribute — Keeps device draw calls around 10 instead of 45-75 and protects the 100 draw-call cap — 2026-10-16 — Accepted**
+
+**D-016 — Geometry compression and preview assets — Meshopt only (no Draco); KTX2 only for the final build; the browser preview uses uncompressed GLB plus PNG/WebP atlases because the single-file artifact cannot load the Basis transcoder — Smaller decoder, one pipeline to pin, and previews keep working — 2026-10-16 — Accepted**
+
+**Pending decision (needs owner approval of the final visual direction): art direction V2 (industrial workshop, `docs/art/` on branch `gpt/art-direction`) would supersede D-003/D-004 (neon low-poly) and the root ART_DIRECTION.md. Not applied yet.**
+
 ## Open questions
 - Whether a minimal backend is needed before launch.
 - Final game name/store title and trademark check.

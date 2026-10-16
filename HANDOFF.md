@@ -34,7 +34,7 @@
 2. Fix issues found, tune `packages/data/economy.json` with the simulator.
 3. Real Android performance test (go/no-go, D-001).
 4. Next M3 step: per-cluster network model (partial throttling). Changes balance: rerun `npm run sim`, update economy.json and ECONOMY.md.
-5. Owner to share reference-game screenshots so ART_DIRECTION.md can set the M4 visual target.
+5. M4 art package received and pushed on `gpt/art-direction` (docs/art/, commits 09b8d9f, aeab0be). Technical review done; decisions D-013..D-016 recorded here. Owner to approve the final visual direction; then supersede D-003/D-004 and start with silhouette sheets, then `gpu_rack_s1` + one floor tile as the pipeline probe.
 
 ## Next recommended action
 Owner feedback on the playable preview, then phone FPS test. (Style D-003/D-004 are final.)
