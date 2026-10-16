@@ -2,7 +2,7 @@
 
 ## Stack (provisional, see D-001)
 - TypeScript, Vite, Three.js (rendering)
-- UI: DOM/lightweight framework (Preact candidate), not rendered inside the 3D canvas
+- UI: plain DOM + TypeScript (D-011), not rendered inside the 3D canvas
 - Mobile wrapper: Capacitor (Android first)
 - Tests: Vitest
 - Assets: GLB with Meshopt/Draco compression and KTX2 textures
@@ -51,6 +51,5 @@ tools/
 Offline time validated with a server timestamp (when a backend exists) plus capped offline hours; client-side clock rollback detection. No server-authoritative economy in MVP.
 
 ## Open technical questions
-- Preact vs plain DOM for UI.
 - Native vs Capacitor plugins for ads/IAP in M6.
 - Whether to add a minimal backend before launch (time check, analytics).

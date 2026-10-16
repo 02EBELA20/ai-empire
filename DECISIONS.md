@@ -22,7 +22,10 @@ Format: **D-xxx — Topic — Decision — Reason — Date — Status**
 
 **D-010 — Repository — github.com/02EBELA20/ai-empire is the source of truth; `main` stable, work on `claude/*` and `gpt/*` branches — Shared state between assistants — 2026-10-15 — Accepted**
 
+**D-011 — UI layer — Plain DOM/TypeScript for the prototype, no UI framework — Smaller bundle, zero extra dependencies, easy to swap later; the HUD is simple enough — 2026-10-15 — Accepted (revisit if UI grows)**
+
+**D-012 — Preview build — `vite build --mode single` inlines everything into one HTML for quick sharing/previews; the normal build stays multi-file — The source stays modular (no monolith); the single file is only a build artifact — 2026-10-15 — Accepted**
+
 ## Open questions
-- Preact vs plain DOM for UI (decide in M2).
 - Whether a minimal backend is needed before launch.
 - Final game name/store title and trademark check.
