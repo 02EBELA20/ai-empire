@@ -6,6 +6,10 @@
 - Web prototype (`apps/web`): isometric Three.js scene with animated fans, cables and flowing particles; mobile-first HUD and shop; TAP button; offline-earnings popup; Singularity Reboot; autosave.
 - 36 automated tests (economy formulas, parity with the Node simulator baseline, sim rules, offline, prestige, save validation, simulated playthrough).
 - `npm run build:single` for a one-file preview build; `?speed=N`, `?fresh`, `?debug` URL options for testing.
+### Changed (after first owner screenshot)
+- Camera now auto-frames the built area; the floor grows with the base.
+- Brighter device bodies with neon outlines; extra rim light.
+- Power and cooling cables now reach Basic PCs, so connections are visible from the first machines.
 ### Known gaps
 - Not yet tested on a real phone; no screenshot test was possible in the build sandbox.
 
