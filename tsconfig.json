@@ -29,6 +29,9 @@
       "@save": [
         "./packages/save/src/index.ts"
       ],
+      "@assets": [
+        "./packages/assets/src/index.ts"
+      ],
       "@data/*": [
         "./packages/data/*"
       ]

@@ -3,6 +3,9 @@ import economyJson from '@data/economy.json';
 import type { EconomyConfig } from '@economy';
 import { applyOffline, buy, createState, network, optimize, planPurchase, reboot, tap, tick, type GameState } from '@sim';
 import { loadGame, saveGame, type StorageLike } from '@save';
+import assetsJson from '@data/device-assets.json';
+import type { AssetConfig } from '@assets';
+import { loadBundledDeviceAssets, type DeviceAssets } from './deviceAssets';
 import { GameScene } from './scene';
 import { createUI } from './ui';
 import { formatNum } from './format';
@@ -37,6 +40,15 @@ let state: GameState = (!params.has('fresh') && loadGame(storage, SAVE_KEY, ids)
 const offline = applyOffline(cfg, state, now());
 
 const scene = new GameScene(document.getElementById('view') as HTMLCanvasElement);
+let deviceAssets: DeviceAssets | null = null;
+// Models are optional: anything missing or rejected keeps the built-in placeholder, so the game never waits on art.
+void loadBundledDeviceAssets(assetsJson as unknown as AssetConfig).then((a) => {
+  deviceAssets = a;
+  if (a.size > 0) {
+    scene.setAssets(a);
+    refresh();
+  }
+});
 
 const ui = createUI(cfg, {
   onBuy(id) {
@@ -106,7 +118,7 @@ refresh();
 if (offline.seconds >= 30 && offline.credits > 0) ui.showOffline(offline.seconds, offline.credits);
 
 if (params.has('debug')) {
-  (window as unknown as Record<string, unknown>)['__ai'] = { cfg, get state() { return state; }, set state(v: GameState) { state = v; refresh(); }, buy: (id: string) => buy(cfg, state, id), refresh };
+  (window as unknown as Record<string, unknown>)['__ai'] = { cfg, get state() { return state; }, set state(v: GameState) { state = v; refresh(); }, buy: (id: string) => buy(cfg, state, id), refresh, get assets() { return deviceAssets?.reports ?? []; } };
 }
 
 let last = performance.now();

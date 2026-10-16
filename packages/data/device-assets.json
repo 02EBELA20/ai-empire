@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "source": "docs/art/DEVICES.md and BLENDER_GUIDE.md (branch gpt/art-direction); see docs/ASSET_CONTRACT.md",
+  "tileMeters": 2,
+  "insetMeters": 0.08,
+  "worldPerMeter": 0.25,
+  "stageLevels": [1, 25, 100, 400],
+  "devices": {
+    "basic_pc":    { "tiles": [1, 1], "heights": [1.25, 1.4, 1.55, 1.7], "triangles": [650, 1050, 1600, 2250],  "sockets": ["socket_power", "socket_data", "socket_cooling"] },
+    "power_gen":   { "tiles": [2, 2], "heights": [1.5, 1.8, 2.2, 2.4],   "triangles": [900, 1450, 2300, 3200],  "sockets": ["socket_power"] },
+    "cooling":     { "tiles": [2, 2], "heights": [1.5, 1.9, 2.1, 2.5],   "triangles": [850, 1400, 2250, 3100],  "sockets": ["socket_cooling"] },
+    "gpu_rack":    { "tiles": [2, 2], "heights": [1.6, 1.9, 2.2, 2.6],   "triangles": [1000, 1750, 2650, 3700], "sockets": ["socket_power", "socket_data", "socket_cooling"] },
+    "network_hub": { "tiles": [1, 2], "heights": [1.2, 1.4, 1.7, 2.0],   "triangles": [600, 1050, 1700, 2400],  "sockets": ["socket_data"] },
+    "ai_core":     { "tiles": [3, 3], "heights": [2.1, 2.5, 3.0, 3.4],   "triangles": [1400, 2400, 3700, 5000], "sockets": ["socket_data"] }
+  }
+}

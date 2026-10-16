@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
       '@economy': r('./packages/economy/src/index.ts'),
       '@sim': r('./packages/sim/src/index.ts'),
       '@save': r('./packages/save/src/index.ts'),
+      '@assets': r('./packages/assets/src/index.ts'),
       '@data': r('./packages/data'),
     },
   },
@@ -26,7 +27,7 @@ export default defineConfig(({ mode }) => ({
   plugins: mode === 'single' ? [viteSingleFile()] : [],
   test: {
     root: r('.'),
-    include: ['packages/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'apps/**/*.test.ts'],
     environment: 'node',
   },
 }));

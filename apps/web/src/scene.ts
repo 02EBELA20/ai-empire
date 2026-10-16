@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { bottleneck, type NetworkResult } from '@economy';
 import type { GameState } from '@sim';
+import type { DeviceAssets } from './deviceAssets';
 
 type V2 = [number, number];
 type CableKind = 'power' | 'cooling' | 'data';
@@ -13,6 +14,11 @@ interface Placed {
   pos: V2;
   stage: number;
 }
+
+/** Footprint of each device in the scene's world units (corner-origin layout). GLB models are fitted into this. */
+const FOOT: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
+
+const SPIN_AXIS = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
 
 const COLORS = { power: 0xffb02e, cooling: 0x4db8ff, data: 0x2ee6a8, bad: 0xff5a5a };
 
@@ -80,8 +86,10 @@ interface DeviceVisual {
   born: number;
   warn: THREE.Mesh | null;
   group: THREE.Group;
-  spinners: { obj: THREE.Object3D; speed: number; axis: 'y' | 'x' }[];
+  spinners: { obj: THREE.Object3D; speed: number; axis: 'y' | 'x' | 'z' }[];
   statusMats: THREE.MeshStandardMaterial[];
+  /** Emissive materials of a loaded GLB model (empty for the built-in placeholder models). */
+  emissives: { mat: THREE.MeshStandardMaterial; color: THREE.Color; base: number }[];
   baseStatus: number;
 }
 
@@ -125,7 +133,7 @@ function makeFan(r: number, color: number): THREE.Group {
 
 function makeDevice(id: string, stage: number): DeviceVisual {
   const g = new THREE.Group();
-  const v: DeviceVisual = { key: '', born: 1, warn: null, group: g, spinners: [], statusMats: [], baseStatus: 0xffffff };
+  const v: DeviceVisual = { key: '', born: 1, warn: null, group: g, spinners: [], statusMats: [], emissives: [], baseStatus: 0xffffff };
   switch (id) {
     case 'basic_pc': {
       const h = 0.28 + stage * 0.05;
@@ -232,6 +240,7 @@ export class GameScene {
   private visuals: { id: string; v: DeviceVisual }[] = [];
   private known = new Set<string>();
   private firstBuild = true;
+  private assets: DeviceAssets | null = null;
   private ripples: { mesh: THREE.Mesh; t: number }[] = [];
   private boost = 0;
   private ghost: THREE.LineSegments;
@@ -289,12 +298,11 @@ export class GameScene {
   }
 
   private rebuildGround(layout: Layout): void {
-    const FP: Record<string, V2> = { basic_pc: [0.7, 0.6], gpu_rack: [1, 0.9], cooling: [0.9, 0.9], power_gen: [0.9, 0.9], network_hub: [0.9, 0.9], ai_core: [1.3, 1.3] };
     let x0 = 0, x1 = 5.0, z0 = -1.5, z1 = 2.6;
     // Never frame tighter than the default base area, so early game is not over-zoomed and there is room to grow.
     let fx0 = 0, fx1 = 4.6, fz0 = -1.5, fz1 = 2;
     for (const p of layout.placed) {
-      const f = FP[p.id] ?? [1, 1];
+      const f = FOOT[p.id] ?? [1, 1];
       fx0 = Math.min(fx0, p.pos[0]);
       fx1 = Math.max(fx1, p.pos[0] + f[0]);
       fz0 = Math.min(fz0, p.pos[1]);
@@ -320,6 +328,23 @@ export class GameScene {
     g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
     this.ground.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x2c3a78 })));
     this.fit();
+  }
+
+  /** Supplies loaded GLB models; devices that have one for their current stage use it, the rest keep the placeholder. */
+  setAssets(a: DeviceAssets): void {
+    this.assets = a;
+    this.signature = '';
+  }
+
+  private makeVisual(p: Placed): DeviceVisual {
+    const inst = this.assets?.instantiate(p.id, p.stage, FOOT[p.id] ?? [1, 1]);
+    if (!inst) return makeDevice(p.id, p.stage);
+    const g = new THREE.Group();
+    g.add(inst.holder);
+    const v: DeviceVisual = { key: '', born: 1, warn: null, group: g, spinners: [], statusMats: [], emissives: inst.emissives, baseStatus: 0xffffff };
+    const speed: Record<string, number> = { gpu_rack: 6, cooling: 9, basic_pc: 5, power_gen: 3 };
+    for (const f of inst.fans) v.spinners.push({ obj: f, speed: speed[p.id] ?? 6, axis: 'y' });
+    return v;
   }
 
   /** Which device type is under this screen point, or null. Used for tap-to-inspect. */
@@ -364,7 +389,7 @@ export class GameScene {
     this.visuals = [];
     const nextKnown = new Set<string>();
     for (const p of layout.placed) {
-      const v = makeDevice(p.id, p.stage);
+      const v = this.makeVisual(p);
       v.key = `${p.id}@${p.pos.join(',')}`;
       nextKnown.add(v.key);
       if (!this.firstBuild && !this.known.has(v.key)) v.born = 0;
@@ -450,12 +475,23 @@ export class GameScene {
     }
     const spin = 0.35 + 0.65 * net.eff;
     for (const { id, v } of this.visuals) {
-      for (const sp of v.spinners) sp.obj.rotation[sp.axis] += sp.speed * spin * dt;
+      // Rotate around the node's own axis, so a fan authored with a tilted pivot still spins on its real axis.
+      for (const sp of v.spinners) sp.obj.rotateOnAxis(SPIN_AXIS[sp.axis], sp.speed * spin * dt);
       for (const m of v.statusMats) {
         const bad = throttled && id === 'gpu_rack';
         m.color.setHex(bad ? COLORS.bad : v.baseStatus);
         m.emissive.setHex(bad ? COLORS.bad : v.baseStatus);
         m.emissiveIntensity = bad ? 1.1 + 0.6 * Math.sin(this.t * 7) : 1.3;
+      }
+      for (const e of v.emissives) {
+        const bad = throttled && id === 'gpu_rack';
+        if (bad) {
+          e.mat.emissive.setHex(COLORS.bad);
+          e.mat.emissiveIntensity = e.base * (0.8 + 0.6 * Math.sin(this.t * 7));
+        } else {
+          e.mat.emissive.copy(e.color);
+          e.mat.emissiveIntensity = e.base * (1 + 0.06 * Math.sin(this.t * 3));
+        }
       }
       const f = this.flashes.get(id) ?? 0;
       if (v.born < 1) v.born = Math.min(1, v.born + dt * 2.2);
