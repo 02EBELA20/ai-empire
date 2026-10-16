@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "_note": "Draft v0 economy. All numbers are tunable via tools/sim/simulate.mjs. Do not hardcode these in game code.",
+  "startingCredits": 10,
+  "starterSupply": {
+    "power": 10,
+    "cooling": 8
+  },
+  "milestones": {
+    "levels": [
+      25,
+      50,
+      100,
+      200,
+      400
+    ],
+    "multiplier": 2
+  },
+  "offline": {
+    "capHours": 4,
+    "rate": 0.6
+  },
+  "prestige": {
+    "k": 1,
+    "T": 20000000,
+    "bonusPerPoint": 0.02
+  },
+  "hub": {
+    "bonusPerLevel": 0.02,
+    "maxBonus": 1.0
+  },
+  "devices": [
+    {
+      "id": "basic_pc",
+      "kind": "producer",
+      "baseCost": 10,
+      "costGrowth": 1.1,
+      "baseIncome": 0.5,
+      "power": 0.15,
+      "heat": 0.1,
+      "unlockAt": 0
+    },
+    {
+      "id": "power_gen",
+      "kind": "power",
+      "baseCost": 300,
+      "costGrowth": 1.12,
+      "supply": 8,
+      "unlockAt": 150
+    },
+    {
+      "id": "cooling",
+      "kind": "cooling",
+      "baseCost": 500,
+      "costGrowth": 1.12,
+      "supply": 6,
+      "unlockAt": 300
+    },
+    {
+      "id": "gpu_rack",
+      "kind": "producer",
+      "baseCost": 2500,
+      "costGrowth": 1.13,
+      "baseIncome": 4,
+      "power": 2.5,
+      "heat": 2.0,
+      "unlockAt": 1500
+    },
+    {
+      "id": "network_hub",
+      "kind": "hub",
+      "baseCost": 20000,
+      "costGrowth": 1.15,
+      "unlockAt": 40000
+    },
+    {
+      "id": "ai_core",
+      "kind": "producer",
+      "baseCost": 150000,
+      "costGrowth": 1.17,
+      "baseIncome": 60,
+      "power": 12,
+      "heat": 8,
+      "unlockAt": 2000000
+    }
+  ]
+}

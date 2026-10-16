@@ -1,0 +1,18 @@
+AI Empire economy sim: 7 days, 3 sessions/day x 15 min
+
+First purchase of each device (play time):
+  basic_pc     0s (day 1)
+  power_gen    8.6 min (day 1)
+  cooling      8.6 min (day 1)
+  gpu_rack     6.4 min (day 1)
+  network_hub  15.0 min (day 1)
+  ai_core      30.0 min (day 1)
+
+Day  Lifetime     Income/s   Eff   NP   Levels
+  1      7.46M      1.47K  100%    0  basic:84 power:27 cooling:26 gpu:32 network:18 ai:11
+  2     80.35M      6.56K  100%    2  basic:110 power:53 cooling:50 gpu:47 network:36 ai:25
+  3    321.06M     10.45K  100%    4  basic:121 power:69 cooling:65 gpu:59 network:47 ai:33
+  4    642.95M     12.27K  100%    5  basic:130 power:79 cooling:74 gpu:66 network:50 ai:38
+  5      1.01B     13.38K  100%    7  basic:137 power:86 cooling:80 gpu:69 network:50 ai:42
+  6      1.40B     13.98K  100%    8  basic:140 power:90 cooling:84 gpu:72 network:50 ai:44
+  7      1.80B     14.57K  100%    9  basic:141 power:94 cooling:88 gpu:75 network:50 ai:46
